@@ -42,6 +42,7 @@ import org.spongepowered.api.block.entity.BlockEntityType;
 import org.spongepowered.api.boss.BossBarColor;
 import org.spongepowered.api.boss.BossBarOverlay;
 import org.spongepowered.api.boss.ServerBossBar;
+import org.spongepowered.api.command.registrar.CommandRegistrar;
 import org.spongepowered.api.data.DataRegistration;
 import org.spongepowered.api.data.Key;
 import org.spongepowered.api.data.meta.PatternLayer;
@@ -275,6 +276,7 @@ import org.spongepowered.common.registry.type.block.WallTypeRegistryModule;
 import org.spongepowered.common.registry.type.block.WireAttachmentRegistryModule;
 import org.spongepowered.common.registry.type.boss.BossBarColorRegistryModule;
 import org.spongepowered.common.registry.type.boss.BossBarOverlayRegistryModule;
+import org.spongepowered.common.registry.type.command.CommandRegistrarRegistry;
 import org.spongepowered.common.registry.type.data.DataFormatRegistryModule;
 import org.spongepowered.common.registry.type.data.DataTranslatorRegistryModule;
 import org.spongepowered.common.registry.type.data.HandPreferenceRegistryModule;
@@ -658,6 +660,7 @@ public final class CommonModuleRegistry {
                 .registerModule((Class<DataRegistration<?, ?>>) (Class<?>) DataRegistration.class, SpongeManipulatorRegistry.getInstance())
                 .registerModule(new ItemStackComparatorRegistryModule())
                 .registerModule(HandPreference.class, HandPreferenceRegistryModule.getInstance())
+                .registerModule(CommandRegistrar.class, new CommandRegistrarRegistry());
 
                 // Miscellaneous Registries
                 .registerModule(DungeonMobRegistryModule.getInstance())

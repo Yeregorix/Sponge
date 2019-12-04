@@ -11,6 +11,8 @@
         "advancements.CriteriaTriggersAccessor",
         "block.FireBlockAccessor",
         "block.RedstoneWireBlockAccessor",
+        "brigadier.context.CommandContextAccessor",
+        "brigadier.tree.CommandNodeAccessor",
         "entity.boss.dragon.phase.PhaseTypeAccessor",
         "entity.item.ArmorStandEntityAccessor",
         "entity.item.ExperienceOrbEntityAccessor",
