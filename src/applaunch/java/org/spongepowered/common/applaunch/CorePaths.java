@@ -35,8 +35,9 @@ import java.nio.file.Path;
  *  - plugins
  *  - plugin-configs
  *  - sponge
- *   - configs
- *   - libraries
+ *    - configs
+ *      - worlds
+ *    - libraries
  */
 public final class CorePaths {
 
