@@ -28,6 +28,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Core directory structure of the Sponge platform
+ *
+ * <base_directory>
+ *  - plugins
+ *  - plugin-configs
+ *  - sponge
+ *   - configs
+ *   - libraries
+ */
 public final class CorePaths {
 
     private final Path baseDirectory;
@@ -39,6 +49,7 @@ public final class CorePaths {
     private final Path spongeLibrariesDirectory;
 
     // TODO Determine how much we want to do for CLI args here...unsure if I want to allow any of these (besides the base directory) to be changed
+
     public CorePaths(final Path baseDirectory) {
         this.baseDirectory = baseDirectory;
         this.pluginsDirectory = baseDirectory.resolve("plugins");
