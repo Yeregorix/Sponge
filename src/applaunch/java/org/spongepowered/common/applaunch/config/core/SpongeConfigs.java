@@ -71,7 +71,7 @@ public final class SpongeConfigs {
 
     public static final ConfigurationOptions OPTIONS = ConfigurationOptions.defaults()
             .header(SpongeConfigs.HEADER)
-            .serializers(collection -> collection.register(TokenHoldingString.SERIALIZER)
+            .serializers(collection -> collection
                     .register(type -> {
                         final Class<?> erasure = GenericTypeReflector.erase(type);
                         return erasure.isAnnotationPresent(ConfigSerializable.class) || Config.class.isAssignableFrom(erasure);
@@ -85,15 +85,6 @@ public final class SpongeConfigs {
     private static Path configDir;
 
     private static ConfigHandle<CommonConfig> sponge;
-
-    public static Path getDirectory() {
-        if (SpongeConfigs.configDir == null) {
-            SpongeConfigs.configDir = AppLaunch.pluginPlatform().baseDirectory()
-                    .resolve("config")
-                    .resolve("sponge");
-        }
-        return SpongeConfigs.configDir;
-    }
 
     /**
      * Get global configuration, containing options that cannot be overridden per-world.
@@ -131,7 +122,8 @@ public final class SpongeConfigs {
 
     public static <T extends Config> ConfigHandle<T> create(final Class<T> instance, final @Nullable Supplier<ConfigurationTransformation> versionModifier, final String fileName) {
         try {
-            final HoconConfigurationLoader loader = SpongeConfigs.createLoader(SpongeConfigs.getDirectory().resolve(fileName), SpongeConfigs.OPTIONS);
+            final HoconConfigurationLoader loader = SpongeConfigs.createLoader(AppLaunch.corePlatform().paths().spongeConfigsDirectory()
+                    .resolve(fileName), SpongeConfigs.OPTIONS);
             final ConfigHandle<T> handle = new ConfigHandle<>(instance, versionModifier, loader);
             handle.load();
             return handle;
@@ -175,9 +167,9 @@ public final class SpongeConfigs {
             NodePath.path("sponge", "metrics"));
 
     private static void splitFiles() {
-        final Path commonFile = SpongeConfigs.getDirectory().resolve(CommonConfig.FILE_NAME);
-        final Path metricsFile = SpongeConfigs.getDirectory().resolve(SpongeConfigs.METRICS_NAME);
-        final Path oldGlobalFile = SpongeConfigs.getDirectory().resolve(SpongeConfigs.GLOBAL_NAME);
+        final Path commonFile = AppLaunch.corePlatform().paths().spongeConfigsDirectory().resolve(CommonConfig.FILE_NAME);
+        final Path metricsFile = AppLaunch.corePlatform().paths().spongeConfigsDirectory().resolve(SpongeConfigs.METRICS_NAME);
+        final Path oldGlobalFile = AppLaunch.corePlatform().paths().spongeConfigsDirectory().resolve(SpongeConfigs.GLOBAL_NAME);
 
         // Is this migration unnecessary?
         if (!Files.exists(oldGlobalFile) || Files.exists(commonFile) || Files.exists(metricsFile)) {
@@ -199,7 +191,6 @@ public final class SpongeConfigs {
         } catch (final IOException ex) {
             SpongeConfigs.LOGGER.error("An error occurred while trying to migrate to a split-file configuration layout", ex);
         }
-
     }
 
     private SpongeConfigs() {

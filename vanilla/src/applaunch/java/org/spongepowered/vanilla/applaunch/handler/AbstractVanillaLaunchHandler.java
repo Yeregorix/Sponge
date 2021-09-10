@@ -35,7 +35,7 @@ import org.spongepowered.common.applaunch.AppLaunch;
 import org.spongepowered.plugin.PluginResource;
 import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
 import org.spongepowered.plugin.builtin.jvm.locator.ResourceType;
-import org.spongepowered.vanilla.applaunch.plugin.VanillaPluginPlatform;
+import org.spongepowered.vanilla.applaunch.VanillaCorePlatform;
 
 import java.io.File;
 import java.io.IOException;
@@ -193,7 +193,7 @@ public abstract class AbstractVanillaLaunchHandler implements ILaunchHandlerServ
             }
 
             return new Enumeration<URL>() {
-                final Iterator<Set<PluginResource>> serviceResources = ((VanillaPluginPlatform) AppLaunch.pluginPlatform()).getResources()
+                final Iterator<Set<PluginResource>> serviceResources = ((VanillaCorePlatform) AppLaunch.corePlatform()).resources()
                     .values().iterator();
                 Iterator<PluginResource> resources;
                 URL next = this.computeNext();
@@ -256,7 +256,7 @@ public abstract class AbstractVanillaLaunchHandler implements ILaunchHandlerServ
             if (connection instanceof JarURLConnection) {
                 final URL jarFileUrl = ((JarURLConnection) connection).getJarFileURL();
                 final Optional<Manifest> manifest =  this.manifestCache.computeIfAbsent(jarFileUrl, key -> {
-                    for (final Set<PluginResource> resources : ((VanillaPluginPlatform) AppLaunch.pluginPlatform()).getResources().values()) {
+                    for (final Set<PluginResource> resources : ((VanillaCorePlatform) AppLaunch.corePlatform()).resources().values()) {
                         for (final PluginResource resource : resources) {
                             if (resource instanceof JVMPluginResource) {
                                 final JVMPluginResource jvmResource = (JVMPluginResource) resource;

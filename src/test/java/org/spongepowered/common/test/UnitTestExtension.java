@@ -32,7 +32,7 @@ import org.spongepowered.common.applaunch.config.core.SpongeConfigs;
 public class UnitTestExtension implements BeforeAllCallback {
     @Override
     public void beforeAll(final ExtensionContext context) throws Exception {
-        AppLaunch.setPluginPlatform(new TestPluginPlatform());
+        AppLaunch.setCorePlatform(new TestCorePlatform());
         SpongeConfigs.getCommon();
     }
 }

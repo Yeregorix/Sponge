@@ -35,6 +35,7 @@ import org.spongepowered.asm.launch.MixinLaunchPluginLegacy;
 import org.spongepowered.common.applaunch.AppLaunch;
 import org.spongepowered.plugin.PluginResource;
 import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
+import org.spongepowered.vanilla.applaunch.VanillaCorePlatform;
 import org.spongepowered.vanilla.applaunch.service.AccessWidenerTransformationService;
 import org.spongepowered.vanilla.installer.Constants;
 
@@ -50,7 +51,7 @@ public final class VanillaPlatformService implements ITransformationService {
 
     private static final String NAME = "vanilla_platform";
 
-    private static final VanillaPluginPlatform pluginPlatform = AppLaunch.pluginPlatform();
+    private static final VanillaCorePlatform pluginPlatform = AppLaunch.corePlatform();
 
     @Override
     public @NonNull String name() {
@@ -77,7 +78,7 @@ public final class VanillaPlatformService implements ITransformationService {
 
         final List<Map.Entry<String, Path>> launchResources = new ArrayList<>();
 
-        for (final Map.Entry<String, Set<PluginResource>> resourcesEntry : VanillaPlatformService.pluginPlatform.getResources().entrySet()) {
+        for (final Map.Entry<String, Set<PluginResource>> resourcesEntry : VanillaPlatformService.pluginPlatform.resources().entrySet()) {
             final Set<PluginResource> resources = resourcesEntry.getValue();
             for (final PluginResource resource : resources) {
 
@@ -142,14 +143,14 @@ public final class VanillaPlatformService implements ITransformationService {
 
     @Override
     public void onLoad(final IEnvironment env, final Set<String> otherServices) {
-        final VanillaPluginPlatform pluginPlatform = VanillaPlatformService.pluginPlatform;
+        final VanillaCorePlatform pluginPlatform = VanillaPlatformService.pluginPlatform;
         pluginPlatform.logger().info("SpongePowered PLUGIN Subsystem Version={} Source={}",
             pluginPlatform.version(), this.getCodeSource());
 
         pluginPlatform.discoverLocatorServices();
-        pluginPlatform.getLocatorServices().forEach((k, v) -> pluginPlatform.logger().info("Plugin resource locator '{}' found.", k));
+        pluginPlatform.locatorServices().forEach((k, v) -> pluginPlatform.logger().info("Plugin resource locator '{}' found.", k));
         pluginPlatform.discoverLanguageServices();
-        pluginPlatform.getLanguageServices().forEach((k, v) -> pluginPlatform.logger().info("Plugin language loader '{}' found.", k));
+        pluginPlatform.languageServices().forEach((k, v) -> pluginPlatform.logger().info("Plugin language loader '{}' found.", k));
     }
 
     @Override

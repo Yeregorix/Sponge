@@ -22,24 +22,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.applaunch.config.common;
+package org.spongepowered.common.applaunch;
 
-import org.spongepowered.common.applaunch.config.core.TokenHoldingString;
-import org.spongepowered.configurate.objectmapping.ConfigSerializable;
-import org.spongepowered.configurate.objectmapping.meta.Comment;
-import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.apache.logging.log4j.Logger;
 
-@ConfigSerializable
-public final class GeneralCategory {
+public interface CorePlatform {
 
-    @Setting("config-dir")
-    @Comment("The directory for Sponge plugin configurations, relative to the  \n"
-           + "execution root or specified as an absolute path. \n"
-           + "Note that the default: \"${CANONICAL_GAME_DIR}/config\" \n"
-           + "is going to use the \"config\" directory in the root game directory. \n"
-           + "If you wish for plugin configs to reside within a child of the configuration \n"
-           + "directory, change the value to, for example, \"${CANONICAL_CONFIG_DIR}/sponge/plugins\". \n"
-           + "Note: It is not recommended to set this to \"${CANONICAL_CONFIG_DIR}/sponge\", as there is \n"
-           + "a possibility that plugin configurations can conflict the Sponge core configurations. \n")
-    public TokenHoldingString configDir = TokenHoldingString.of("${CANONICAL_GAME_DIR}/config");
+    String version();
+
+    Logger logger();
+
+    default boolean vanilla() {
+        return true;
+    }
+
+    CorePaths paths();
+
+    String pluginMetadataFilePath();
 }

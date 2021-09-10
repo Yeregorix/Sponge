@@ -27,6 +27,7 @@ package org.spongepowered.vanilla.launch.plugin;
 import com.google.inject.Singleton;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.Level;
+import org.spongepowered.common.applaunch.AppLaunch;
 import org.spongepowered.common.launch.plugin.SpongePluginManager;
 import org.spongepowered.common.util.PrettyPrinter;
 import org.spongepowered.plugin.InvalidPluginException;
@@ -36,7 +37,7 @@ import org.spongepowered.plugin.PluginLanguageService;
 import org.spongepowered.plugin.PluginLoader;
 import org.spongepowered.plugin.PluginResource;
 import org.spongepowered.plugin.metadata.model.PluginDependency;
-import org.spongepowered.vanilla.applaunch.plugin.VanillaPluginPlatform;
+import org.spongepowered.vanilla.applaunch.VanillaCorePlatform;
 import org.spongepowered.vanilla.launch.VanillaLaunch;
 import org.spongepowered.vanilla.launch.plugin.resolver.DependencyResolver;
 import org.spongepowered.vanilla.launch.plugin.resolver.ResolutionResult;
@@ -84,12 +85,13 @@ public final class VanillaPluginManager implements SpongePluginManager {
     }
 
     @SuppressWarnings("unchecked")
-    public void loadPlugins(final VanillaPluginPlatform platform) {
+    public void loadPlugins() {
+        final VanillaCorePlatform platform = AppLaunch.corePlatform();
         final Map<PluginCandidate<PluginResource>, PluginLanguageService<PluginResource>> pluginLanguageLookup = new HashMap<>();
         final Map<PluginLanguageService<PluginResource>, PluginLoader<PluginResource, PluginContainer>> pluginLoaders = new HashMap<>();
 
         // Initialise the plugin language loaders.
-        for (final Map.Entry<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> candidate : platform.getCandidates().entrySet()) {
+        for (final Map.Entry<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> candidate : platform.candidates().entrySet()) {
             final PluginLanguageService<PluginResource> languageService = candidate.getKey();
             final String loaderClass = languageService.pluginLoader();
             try {
@@ -146,7 +148,7 @@ public final class VanillaPluginManager implements SpongePluginManager {
                 final PluginLanguageService<PluginResource> languageService = pluginLanguageLookup.get(candidate);
                 final PluginLoader<PluginResource, PluginContainer> pluginLoader = pluginLoaders.get(languageService);
                 try {
-                    this.addPlugin(pluginLoader.loadPlugin(platform.getStandardEnvironment(), candidate, launchClassloader));
+                    this.addPlugin(pluginLoader.loadPlugin(platform.standardEnvironment(), candidate, launchClassloader));
                 } catch (final InvalidPluginException e) {
                     failedInstances.put(candidate, "Failed to construct: see stacktrace(s) above this message for details.");
                     e.printStackTrace();

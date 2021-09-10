@@ -24,19 +24,16 @@
  */
 package org.spongepowered.vanilla.applaunch;
 
+import com.google.common.collect.Lists;
 import cpw.mods.modlauncher.Launcher;
 import org.fusesource.jansi.AnsiConsole;
 import org.spongepowered.common.applaunch.AppLaunch;
+import org.spongepowered.common.applaunch.CorePlatform;
 import org.spongepowered.common.applaunch.plugin.PluginPlatformConstants;
+import org.spongepowered.plugin.blackboard.Keys;
 import org.spongepowered.plugin.builtin.StandardEnvironment;
-import org.spongepowered.vanilla.applaunch.plugin.VanillaPluginPlatform;
+import org.spongepowered.plugin.builtin.jvm.JVMKeys;
 import org.spongepowered.vanilla.applaunch.util.ArgumentList;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 public final class Main {
 
@@ -44,31 +41,19 @@ public final class Main {
         AnsiConsole.systemInstall();
     }
 
-    private final VanillaPluginPlatform pluginPlatform;
-
-    public Main() {
-        this.pluginPlatform = AppLaunch.setPluginPlatform(new VanillaPluginPlatform(new StandardEnvironment()));
-    }
-
     public static void main(final String[] args) throws Exception {
         AppCommandLine.configure(args);
-        new Main().run();
-    }
 
-    public void run() throws IOException {
         final String implementationVersion = StandardEnvironment.class.getPackage().getImplementationVersion();
 
-        this.pluginPlatform.setVersion(implementationVersion == null ? "dev" : implementationVersion);
-        this.pluginPlatform.setBaseDirectory(AppCommandLine.gameDirectory);
+        // Build the environment
+        final StandardEnvironment standardEnvironment = new StandardEnvironment();
+        standardEnvironment.blackboard().getOrCreate(Keys.BASE_DIRECTORY, () -> AppCommandLine.gameDirectory);
+        standardEnvironment.blackboard().getOrCreate(Keys.VERSION, () -> implementationVersion == null ? "dev" : implementationVersion);
+        standardEnvironment.blackboard().getOrCreate(JVMKeys.METADATA_FILE_PATH, () -> PluginPlatformConstants.METADATA_FILE_LOCATION);
 
-        final Path pluginsDirectory = AppCommandLine.gameDirectory.resolve("plugins");
-        if (Files.notExists(pluginsDirectory)) {
-            Files.createDirectories(pluginsDirectory);
-        }
-        final List<Path> pluginDirectories = new ArrayList<>();
-        pluginDirectories.add(pluginsDirectory);
-        this.pluginPlatform.setPluginDirectories(pluginDirectories);
-        this.pluginPlatform.setMetadataFilePath(PluginPlatformConstants.METADATA_FILE_LOCATION);
+        final CorePlatform corePlatform = AppLaunch.setCorePlatform(new VanillaCorePlatform(standardEnvironment));
+        standardEnvironment.blackboard().getOrCreate(Keys.PLUGIN_DIRECTORIES, () -> Lists.newArrayList(corePlatform.paths().pluginsDirectory()));
 
         AppLaunch.logger().info("Transitioning to ModLauncher, please wait...");
         final ArgumentList lst = ArgumentList.from(AppCommandLine.RAW_ARGS);
