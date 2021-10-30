@@ -32,5 +32,5 @@ public interface PackRepositoryBridge_Vanilla {
 
     Pack bridge$pack(PluginContainer container);
 
-    void bridge$registerResourcePack(PluginResource resource, Pack pack);
+    void bridge$registerResourcePack(PluginContainer resource, Pack pack);
 }

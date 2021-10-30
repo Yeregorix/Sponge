@@ -25,9 +25,17 @@
 package org.spongepowered.test.pack;
 
 import com.google.inject.Inject;
+import net.kyori.adventure.identity.Identity;
+import net.kyori.adventure.text.Component;
+import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.Engine;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.Command;
+import org.spongepowered.api.command.CommandResult;
+import org.spongepowered.api.command.parameter.Parameter;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.lifecycle.RegisterCommandEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.resource.Resource;
 import org.spongepowered.api.resource.ResourcePath;
@@ -36,29 +44,67 @@ import org.spongepowered.api.resource.pack.PackType;
 import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 @Plugin("packtest")
 public final class PackTest {
 
     private final PluginContainer plugin;
+    private final Logger logger;
 
     @Inject
-    public PackTest(final PluginContainer plugin) {
+    public PackTest(final PluginContainer plugin, final Logger logger) {
         this.plugin = plugin;
+        this.logger = logger;
+    }
+
+    @Listener
+    public void onRegisterCommand(final RegisterCommandEvent<Command.Parameterized> event) {
+        final Parameter.Value<PluginContainer> pluginContainerParameter = Parameter.plugin().key("plugin").build();
+        final Parameter.Value<String> nameParameter = Parameter.string().key("name").build();
+        final Parameter.Value<String> pathParameter = Parameter.string().key("path").build();
+        event.register(this.plugin,
+                Command.builder()
+                        .addParameter(Parameter.firstOf(
+                                pluginContainerParameter,
+                                nameParameter
+                        ))
+                        .addParameter(pathParameter)
+                        .executor(exec -> {
+                            final Pack pack;
+                            final String path = exec.requireOne(pathParameter);
+                            if (exec.hasAny(pluginContainerParameter)) {
+                                pack = Sponge.server().packRepository().pack(exec.requireOne(pluginContainerParameter));
+                            } else {
+                                final String packName = exec.requireOne(nameParameter);
+                                pack = Sponge.server().packRepository().pack(packName).orElse(null);
+                                if (pack == null) {
+                                    return CommandResult.error(Component.text("Pack " + packName + " does not exist."));
+                                }
+                            }
+                            try (final Resource resource =
+                                    pack.contents().requireResource(PackType.server(), ResourcePath.of(pack.id(), path))) {
+                                final BufferedReader reader = new BufferedReader(new InputStreamReader(resource.inputStream()));
+                                reader.lines().map(x -> Component.text(x.substring(0, Math.min(100, x.length()))))
+                                        .forEach(x -> exec.sendMessage(Identity.nil(), x));
+                            } catch (final Exception e) {
+                                e.printStackTrace();
+                                return CommandResult.error(Component.text("Could not locate: " + e.getMessage()));
+                            }
+                            return CommandResult.success();
+                        })
+                        .build(),
+                "packtest"
+        );
     }
 
     @Listener
     public void onStartedEngine(final StartedEngineEvent<@NonNull Engine> event) {
-        this.plugin.logger().warn("Printing packs for engine: {}", event.engine().toString());
+        this.logger.warn("Printing packs for engine: {}", event.engine().toString());
         for (final Pack pack : event.engine().packRepository().all()) {
-            this.plugin.logger().error(pack.id());
-        }
-
-        final Pack pack = event.engine().packRepository().pack(this.plugin);
-        try (final Resource resource =
-                pack.contents().requireResource(PackType.server(), ResourcePath.of(this.plugin, "test.txt"))) {
-            System.err.println(resource);
-        } catch (final Exception e) {
-            e.printStackTrace();
+            this.logger.error(pack.id());
         }
     }
+
 }

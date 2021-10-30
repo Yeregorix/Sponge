@@ -33,12 +33,12 @@ import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.common.SpongeCommon;
-import org.spongepowered.plugin.PluginResource;
-import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
+import org.spongepowered.plugin.PluginContainer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,20 +47,22 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class PluginPackResources extends AbstractPackResources {
 
     private final String name;
-    private final PluginResource resource;
+    private final PluginContainer container;
     private final PackMetadataSection metadata;
-    private FileSystem fileSystem;
+    private final @Nullable Supplier<FileSystem> fileSystem;
 
-    public PluginPackResources(final String name, final PluginResource resource) {
-        super(new File("ignore_me"));
+    public PluginPackResources(final String name, final PluginContainer container, final @Nullable Supplier<FileSystem> fileSystem) {
+        super(new File("sponge_plugin_pack"));
         this.name = name;
-        this.resource = resource;
+        this.container = container;
         this.metadata = new PackMetadataSection(new TextComponent("Plugin Resources"), 6);
+        this.fileSystem = fileSystem;
     }
 
     @Override
@@ -70,17 +72,13 @@ public final class PluginPackResources extends AbstractPackResources {
 
     @Override
     protected InputStream getResource(final String rawPath) throws IOException {
-        if (!this.hasResource(rawPath)) {
-            throw new ResourcePackFileNotFoundException(this.file, rawPath);
-        }
-
-        return Files.newInputStream(this.filePath(rawPath));
+        return this.container.openResource(URI.create(rawPath)).orElseThrow(() -> new ResourcePackFileNotFoundException(this.file, rawPath));
     }
 
     @Override
     protected boolean hasResource(final String rawPath) {
         try {
-            return Files.exists(this.filePath(rawPath));
+            return this.container.locateResource(URI.create(rawPath)).isPresent();
         } catch (final Exception e) {
             return false;
         }
@@ -90,14 +88,14 @@ public final class PluginPackResources extends AbstractPackResources {
     public Collection<ResourceLocation> getResources(final PackType type, final String namespace, final String path, final int depth,
             final Predicate<String> fileNameValidator) {
         try {
-            Path root = this.typeRoot(type);
+            final Path root = this.typeRoot(type);
             return Files.walk(root.resolve(namespace).resolve(namespace), depth)
                 .filter(s -> !s.getFileName().toString().endsWith(".mcmeta"))
                 .map(Object::toString)
                 .filter(fileNameValidator)
                 .map(s -> new ResourceLocation(namespace, path))
                 .collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             return Collections.emptyList();
         }
     }
@@ -114,21 +112,26 @@ public final class PluginPackResources extends AbstractPackResources {
     @Override
     public Set<String> getNamespaces(final PackType type) {
         try {
-            return Files.list(this.typeRoot(type))
-                .map(Path::getFileName)
-                .map(Object::toString)
-                .filter(s -> {
-                    if (s.equals(s.toLowerCase(Locale.ROOT))) {
-                        return true;
-                    } else {
-                        SpongeCommon.logger().warn("Pack: ignored non-lowercased namespace: {} in {}", s, this.resource.path());
-                        return false;
-                    }
-                })
-                .collect(Collectors.toSet());
+            final @Nullable Path root = this.typeRoot(type);
+            if (root != null) {
+                return Files.list(root)
+                        .map(Path::getFileName)
+                        .map(Object::toString)
+                        .filter(s -> {
+                            if (s.equals(s.toLowerCase(Locale.ROOT))) {
+                                return true;
+                            } else {
+                                SpongeCommon.logger().warn("Pack: ignored non-lowercased namespace: {} in {}", s,
+                                        root.toAbsolutePath().toString());
+                                return false;
+                            }
+                        })
+                        .collect(Collectors.toSet());
+            }
         } catch (final IOException e) {
-            return Collections.emptySet();
+            // ignored
         }
+        return Collections.emptySet();
     }
 
     @Override
@@ -136,23 +139,11 @@ public final class PluginPackResources extends AbstractPackResources {
 
     }
 
-    private FileSystem fileSystem() throws IOException {
+    private @Nullable Path typeRoot(final PackType type) throws IOException {
         if (this.fileSystem == null) {
-            if (this.resource instanceof JVMPluginResource) {
-                this.fileSystem = ((JVMPluginResource) this.resource).fileSystem();
-            } else {
-                // How...would non JVM resources work here?
-            }
+            return null;
         }
-
-        return this.fileSystem;
+        return this.fileSystem.get().getPath(type.getDirectory());
     }
 
-    private Path typeRoot(final PackType type) throws IOException {
-        return this.fileSystem().getPath(type.getDirectory());
-    }
-
-    private Path filePath(final String path) throws IOException {
-        return this.fileSystem().getPath(path);
-    }
 }

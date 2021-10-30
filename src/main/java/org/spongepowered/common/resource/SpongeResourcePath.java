@@ -130,11 +130,11 @@ public final class SpongeResourcePath implements ResourcePath {
             // replace windows separators with unix
             .map(FilenameUtils::separatorsToUnix)
             // split each part into more parts
-            .flatMap(s -> pathParts(s).stream())
+            .flatMap(s -> this.pathParts(s).stream())
             // icky empty strings are icky
             .filter(Strings::isNotEmpty)
             // convert back to a string path
-            .collect(Collectors.joining("\\/"));
+            .collect(Collectors.joining("/"));
         if (path.isEmpty()) {
             throw new IllegalArgumentException("Path is empty!");
         }

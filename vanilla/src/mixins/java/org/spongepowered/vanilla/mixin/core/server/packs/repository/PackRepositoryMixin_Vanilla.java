@@ -44,22 +44,21 @@ import java.util.Map;
 @Mixin(PackRepository.class)
 public abstract class PackRepositoryMixin_Vanilla implements PackRepositoryBridge_Vanilla {
 
-    private final Map<PluginResource, Pack> vanilla$pluginResourcePacks = new Object2ObjectOpenHashMap<>();
+    private final Map<PluginContainer, Pack> vanilla$pluginResourcePacks = new Object2ObjectOpenHashMap<>();
 
     @Override
     public Pack bridge$pack(final PluginContainer container) {
-        final VanillaPluginManager pluginManager = (VanillaPluginManager) Launch.instance().pluginManager();
-        final PluginResource resource = pluginManager.resource(container);
-        return this.vanilla$pluginResourcePacks.get(resource);
+        return this.vanilla$pluginResourcePacks.get(container);
     }
 
     @Override
-    public void bridge$registerResourcePack(final PluginResource resource, final Pack pack) {
-        this.vanilla$pluginResourcePacks.put(resource, pack);
+    public void bridge$registerResourcePack(final PluginContainer container, final Pack pack) {
+        this.vanilla$pluginResourcePacks.put(container, pack);
     }
 
+    @SuppressWarnings("rawtypes")
     @Redirect(method = "<init>*", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableSet;copyOf([Ljava/lang/Object;)Lcom/google/common/collect/ImmutableSet;"))
-    private ImmutableSet vanilla$addPluginRepository(Object[] elements) {
+    private ImmutableSet vanilla$addPluginRepository(final Object[] elements) {
         final Object[] copied = Arrays.copyOf(elements, elements.length + 1);
         copied[elements.length] = new PluginRepositorySource((PackRepository) (Object) this);
         return ImmutableSet.copyOf(copied);

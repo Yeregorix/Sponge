@@ -29,12 +29,17 @@ import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 import org.apache.commons.io.FilenameUtils;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.common.launch.Launch;
+import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.PluginResource;
+import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
 import org.spongepowered.vanilla.bridge.server.packs.repository.PackRepositoryBridge_Vanilla;
 import org.spongepowered.vanilla.launch.plugin.VanillaPluginManager;
 
+import java.nio.file.FileSystem;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public final class PluginRepositorySource implements RepositorySource {
 
@@ -47,19 +52,27 @@ public final class PluginRepositorySource implements RepositorySource {
     @Override
     public void loadPacks(final Consumer<Pack> callback, final Pack.PackConstructor constructor) {
         final VanillaPluginManager pluginManager = (VanillaPluginManager) Launch.instance().pluginManager();
-        pluginManager.locatedResources().forEach((id, resources) -> {
-            for (final PluginResource resource : resources) {
-                final String filename = FilenameUtils.getBaseName(resource.path().getFileName().toString());
+
+        // For each plugin, we create a pack. That pack might be empty.
+        for (final PluginContainer pluginContainer : pluginManager.plugins()) {
+            // The pack ID is prepended with "plugin-", as this will be the namespace we have to use a valid
+            // character as a separator
+            final String id = "plugin-" + pluginContainer.metadata().id();
+            final PluginResource resource = pluginManager.resource(pluginContainer);
+            // TODO: provide hook in the resource to return the file system for all resource types?
+            //  Also -- can we fake a FileSystem for a non-Jar (needs thinking about)....
+            @Nullable Supplier<FileSystem> fileSystemSupplier = null;
+            if (resource instanceof JVMPluginResource) {
                 final String extension = FilenameUtils.getExtension(resource.path().getFileName().toString());
-                // Only jars for now
                 if ("jar".equals(extension)) {
-                    final PluginPackResources packResources = new PluginPackResources(filename, resource);
-                    final String packId = "mod:" + filename;
-                    final Pack pack = Pack.create(packId, true, () -> packResources, constructor, Pack.Position.BOTTOM, PackSource.DEFAULT);
-                    ((PackRepositoryBridge_Vanilla) this.repository).bridge$registerResourcePack(resource, pack);
-                    callback.accept(pack);
+                    fileSystemSupplier = ((JVMPluginResource) resource)::fileSystem;
                 }
             }
-        });
+
+            final PluginPackResources packResources = new PluginPackResources(id, pluginContainer, fileSystemSupplier);
+            final Pack pack = Pack.create(id, true, () -> packResources, constructor, Pack.Position.BOTTOM, PackSource.DEFAULT);
+            ((PackRepositoryBridge_Vanilla) this.repository).bridge$registerResourcePack(pluginContainer, pack);
+            callback.accept(pack);
+        }
     }
 }
