@@ -28,6 +28,7 @@ import net.minecraft.server.packs.resources.Resource;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.resource.ResourcePath;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 public final class SpongeResource implements org.spongepowered.api.resource.Resource {
@@ -60,7 +61,7 @@ public final class SpongeResource implements org.spongepowered.api.resource.Reso
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         try {
             this.stream.close();
         } finally {

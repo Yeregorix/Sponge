@@ -24,17 +24,18 @@
  */
 package org.spongepowered.common.resource.pack;
 
-import org.spongepowered.api.resource.pack.PackRoot;
+import org.spongepowered.api.resource.pack.PackType;
 
-public final class SpongePackRootFactory implements PackRoot.Factory {
+public final class SpongePackTypeFactory implements PackType.Factory {
 
     @Override
-    public PackRoot assets() {
-        return (PackRoot) (Object) net.minecraft.server.packs.PackType.CLIENT_RESOURCES;
+    public PackType client() {
+        return (PackType) (Object) net.minecraft.server.packs.PackType.CLIENT_RESOURCES;
     }
 
     @Override
-    public PackRoot data() {
-        return (PackRoot) (Object) net.minecraft.server.packs.PackType.SERVER_DATA;
+    public PackType server() {
+        return (PackType) (Object) net.minecraft.server.packs.PackType.SERVER_DATA;
     }
+
 }

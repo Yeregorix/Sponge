@@ -32,7 +32,7 @@ import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.resource.Resource;
 import org.spongepowered.api.resource.ResourcePath;
 import org.spongepowered.api.resource.pack.Pack;
-import org.spongepowered.api.resource.pack.PackRoot;
+import org.spongepowered.api.resource.pack.PackType;
 import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
 
@@ -54,9 +54,10 @@ public final class PackTest {
         }
 
         final Pack pack = event.engine().packRepository().pack(this.plugin);
-        try (final Resource resource = pack.contents().resource(PackRoot.assets(), ResourcePath.of(this.plugin, "test.txt"))) {
+        try (final Resource resource =
+                pack.contents().requireResource(PackType.server(), ResourcePath.of(this.plugin, "test.txt"))) {
             System.err.println(resource);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
     }

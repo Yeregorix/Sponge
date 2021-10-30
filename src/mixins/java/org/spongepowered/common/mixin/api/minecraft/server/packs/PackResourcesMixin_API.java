@@ -26,11 +26,12 @@ package org.spongepowered.common.mixin.api.minecraft.server.packs;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.resource.Resource;
 import org.spongepowered.api.resource.ResourcePath;
 import org.spongepowered.api.resource.pack.PackContents;
-import org.spongepowered.api.resource.pack.PackRoot;
+import org.spongepowered.api.resource.pack.PackType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.resource.SpongeResource;
@@ -38,8 +39,11 @@ import org.spongepowered.common.resource.SpongeResourcePath;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -62,13 +66,27 @@ public interface PackResourcesMixin_API extends PackContents {
     }
 
     @Override
-    default Resource resource(final PackRoot root, final ResourcePath path) throws IOException {
-        return new SpongeResource(Objects.requireNonNull(path, "path"), this.shadow$getResource((net.minecraft.server.packs.PackType) (Object) Objects.requireNonNull(root, "root"),
-            (ResourceLocation) (Object) path.key()));
+    default Optional<Resource> resource(final PackType root, final ResourcePath path) throws IOException {
+        return Optional.ofNullable(this.api$createResource(root, path));
     }
 
     @Override
-    default Collection<ResourcePath> paths(final PackRoot root, final String namespace, final String prefix, final int depth, final Predicate<String> filter) {
+    default Resource requireResource(final PackType root, final ResourcePath path) throws IOException {
+        final Resource resource = this.api$createResource(root, path);
+        if (resource == null) {
+            throw new NoSuchElementException(MessageFormat.format("Pack type {} does not contain a resource at {}", root, path));
+        }
+        return resource;
+    }
+
+    default @Nullable Resource api$createResource(final PackType root, final ResourcePath path) throws IOException {
+        return new SpongeResource(Objects.requireNonNull(path, "path"),
+                this.shadow$getResource((net.minecraft.server.packs.PackType) (Object) Objects.requireNonNull(root, "root"),
+                    (ResourceLocation) (Object) path.key()));
+    }
+
+    @Override
+    default Collection<ResourcePath> paths(final PackType root, final String namespace, final String prefix, final int depth, final Predicate<String> filter) {
         final Collection<ResourceLocation> resources =
             this.shadow$getResources((net.minecraft.server.packs.PackType) (Object) Objects.requireNonNull(root, "root"), Objects.requireNonNull(namespace,
                 "namespace"), Objects.requireNonNull(prefix, "prefix"), depth, Objects.requireNonNull(filter, "filter"));
@@ -80,13 +98,13 @@ public interface PackResourcesMixin_API extends PackContents {
     }
 
     @Override
-    default boolean exists(final PackRoot root, final ResourcePath path) {
+    default boolean exists(final PackType root, final ResourcePath path) {
         return this.shadow$hasResource((net.minecraft.server.packs.PackType) (Object) Objects.requireNonNull(root, "root"),
             (ResourceLocation) (Object) Objects.requireNonNull(path, "path").key());
     }
 
     @Override
-    default Set<String> namespaces(final PackRoot root) {
+    default Set<String> namespaces(final PackType root) {
         return this.shadow$getNamespaces((net.minecraft.server.packs.PackType) (Object) Objects.requireNonNull(root, "root"));
     }
 }
