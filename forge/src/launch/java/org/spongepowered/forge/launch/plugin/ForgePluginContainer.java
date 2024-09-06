@@ -35,8 +35,8 @@ import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.metadata.PluginMetadata;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -73,18 +73,8 @@ public class ForgePluginContainer implements PluginContainer {
 
     @Override
     public Optional<URI> locateResource(String relative) {
-        Objects.requireNonNull(relative, "relative");
-
-        final ClassLoader classLoader = this.modContainer.getMod().getClass().getClassLoader();
-        final URL resolved = classLoader.getResource(relative);
-        try {
-            if (resolved == null) {
-                return Optional.empty();
-            }
-            return Optional.of(resolved.toURI());
-        } catch (final URISyntaxException ignored) {
-            return Optional.empty();
-        }
+        final Path p = this.modContainer.getModInfo().getOwningFile().getFile().findResource(Objects.requireNonNull(relative, "relative"));
+        return Files.exists(p) ? Optional.of(p.toUri()) : Optional.empty();
     }
 
     @Override
