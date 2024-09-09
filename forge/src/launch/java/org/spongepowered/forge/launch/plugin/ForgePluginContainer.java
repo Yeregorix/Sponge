@@ -45,7 +45,7 @@ public class ForgePluginContainer implements PluginContainer {
     private Logger logger;
     private PluginMetadata pluginMetadata;
 
-    ForgePluginContainer(final ModContainer modContainer) {
+    private ForgePluginContainer(final ModContainer modContainer) {
         this.modContainer = modContainer;
     }
 
